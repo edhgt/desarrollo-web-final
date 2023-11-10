@@ -15,3 +15,9 @@ db.createCollection("likes")
 
 exit
 ```
+
+### Desplegar entornos de desarrollo
+```bash
+cp backend/.env.example backend.env
+cp frontend/.env.example frontend.env
+```
