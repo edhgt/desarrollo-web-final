@@ -1,27 +1,35 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
+const passportLocalMongoose = require('passport-local-mongoose');
 
 const userSchema = new mongoose.Schema({
-  _id: String,
-  googleId: { type: String, required: false, unique: true },
+  googleId: { type: String, required: false, unique: false },
   displayName: { type: String, required: false },
   username: { type: String, unique: true, required: true },
-  email: { type: String, unique: false, required: true },
-  password: { type: String, required: true },
+  email: { type: String, unique: false, required: false },
+  password: String,
   profile_picture: String,
   created_at: { type: Date, default: Date.now },
   followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 });
 
-// Método para encriptar la contraseña antes de guardarla en la base de datos
-userSchema.methods.encryptPassword = function (password) {
-  return bcrypt.hashSync(password, bcrypt.genSaltSync(10), null);
-};
+userSchema.pre('save', async function (next) {
+  try {
+    if (!this.isModified('password')) {
+      return next();
+    }
 
-// Método para verificar la contraseña
-userSchema.methods.validPassword = function (password) {
-  return bcrypt.compareSync(password, this.password);
-};
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(this.password, salt);
+    this.password = hash;
+    next();
+  } catch (error) {
+    return next(error);
+  }
+});
+
+userSchema.plugin(passportLocalMongoose);
 
 const User = mongoose.model('User', userSchema);
 

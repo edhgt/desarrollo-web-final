@@ -1,17 +1,21 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import React, { useEffect } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
-const PhotoList = () => {
-  const { user, logout } = useAuth();
+const Home = () => {
+  const { user, isAuthenticated, logout } = useAuth();
 
   return (
     <div>
-      <h2>Photo List Page</h2>
-      <p>Welcome, {user ? user.username : 'Guest'}!</p>
-      <button onClick={logout}>Logout</button>
+      <p>Bienvenido, {user?.displayName}!</p>
+      <button onClick={logout}>Salir</button>
+      <Link to="/home/upload">
+        <i className="fas fa-upload"></i>
+        <span className="ml-2"> Subir foto</span>
+      </Link>
+      {/* Otras secciones o información específica del usuario */}
     </div>
   );
 };
 
-export default PhotoList;
+export default Home;

@@ -1,31 +1,44 @@
 const Photo = require('../models/Photo');
+const path = require('fs-system');
 
-// Obtener todas las fotos
-exports.getAllPhotos = async (req, res) => {
+const uploadPhoto = async (buffer, originalName) => {
+  const originalKey = `photos/originals/${Date.now()}_${path.basename(originalName)}`;
+
+  // Sube la foto original a S3
+  await uploadToS3(buffer, originalKey);
+
+  // Redimensiona y sube la foto a diferentes tamaños
+  const sizes = [300, 600, 1200];
+  const resizedUrls = await Promise.all(
+    sizes.map(async (size) => {
+      const resizedBuffer = await resizePhoto(buffer, size);
+      const resizedKey = `photos/resized/${size}_${originalKey}`;
+      await uploadToS3(resizedBuffer, resizedKey);
+
+      return { size: size.toString(), url: `URL_BASE/${resizedKey}` };
+    })
+  );
+
+  // Guarda la información de la foto en la base de datos
+  const newPhoto = new Photo({
+    key: originalKey,
+    originalUrl: `URL_BASE/${originalKey}`,
+    resizedUrls,
+  });
+
+  await newPhoto.save();
+
+  return newPhoto;
+};
+
+const getAllPhotos = async (_id) => {
   try {
-    const photos = await Photo.find();
-    res.status(200).json(photos);
+    const photos = await Photo.find({ _id });
+    return photos;
   } catch (error) {
-    res.status(500).json({ error: 'Error al obtener fotos' });
+    console.error('Error fetching photos from MongoDB:', error);
+    throw error;
   }
 };
 
-// Obtener una foto por su ID
-exports.getPhotoById = async (req, res) => {
-  try {
-    const photo = await Photo.findById(req.params.photoId);
-    res.status(200).json(photo);
-  } catch (error) {
-    res.status(500).json({ error: 'Error al obtener foto por ID' });
-  }
-};
-
-// Crear una nueva foto
-exports.createPhoto = async (req, res) => {
-  try {
-    const newPhoto = await Photo.create(req.body);
-    res.status(201).json(newPhoto);
-  } catch (error) {
-    res.status(500).json({ error: 'Error al crear foto' });
-  }
-};
+module.exports = { uploadPhoto, getAllPhotos };

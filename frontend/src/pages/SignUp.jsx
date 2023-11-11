@@ -4,15 +4,15 @@ import axios from '../utils/api';
 const SignUp = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
 
   const handleSignUp = async () => {
     try {
       const response = await axios.post('/api/user/register', {
         username,
+        email,
         password,
       });
-
-      console.log(response.data); // Puedes manejar la respuesta según tus necesidades
 
     } catch (error) {
       console.error('Error al crear la cuenta:', error);
@@ -25,6 +25,10 @@ const SignUp = () => {
       <label>
         Usuario:
         <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
+      </label>
+      <label>
+        Correo electrónico:
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
       </label>
       <label>
         Contraseña:
